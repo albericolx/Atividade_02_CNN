@@ -1,3 +1,2 @@
 # Issues / Pendências
-- **Aguardando Download**: O download da biblioteca PyTorch está em andamento (task background). Após a conclusão, executar py code/main.py para gerar os resultados e gráficos.
-- **Atualização do LaTeX**: Os resultados quantitativos gerados precisam ser inseridos na Tabela Comparativa de main.tex.
+- **Repositório Remoto**: O repositório local foi configurado e as branches (main, develop, feature/CNN-architecture) foram criadas. É necessário criar um repositório vazio no GitHub chamado Atividade_02_CNN para que o comando git push -u origin feature/CNN-architecture funcione e sincronize o projeto.
