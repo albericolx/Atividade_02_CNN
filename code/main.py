@@ -48,6 +48,7 @@ class BaseCNN(nn.Module):
         x = x.view(-1, 32 * 8 * 8)
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
+        x = torch.sigmoid(x)  # Sigmoide aplicada na saida
         return x
 
 # Modificação 1: Adição de Dropout
@@ -69,6 +70,7 @@ class Mod1CNN(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
+        x = torch.sigmoid(x)
         return x
 
 # Modificação 2: Dropout + LeakyReLU
@@ -90,6 +92,7 @@ class Mod2CNN(nn.Module):
         x = self.leaky_relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
+        x = torch.sigmoid(x)
         return x
 
 # Modificação 3: Dropout + LeakyReLU + Mais 1 Camada Convolucional
@@ -113,6 +116,7 @@ class Mod3CNN(nn.Module):
         x = self.leaky_relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
+        x = torch.sigmoid(x)
         return x
 
 # --- FUNÇÃO DE TREINAMENTO ---
