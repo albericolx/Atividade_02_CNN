@@ -129,8 +129,10 @@ def train_model(model, name, epochs=3):
     start_time = time.time()
     
     train_losses = []
+    val_accuracies = [] # Nova lista para rastrear a acurácia por época
     
     for epoch in range(epochs):
+        model.train() # Modo de treinamento
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             inputs, labels = data[0].to(device), data[1].to(device)
@@ -145,31 +147,32 @@ def train_model(model, name, epochs=3):
         
         epoch_loss = running_loss / len(trainloader)
         train_losses.append(epoch_loss)
-        print(f"Epoch {epoch+1}/{epochs} - Loss: {epoch_loss:.4f}")
+        
+        # Avaliação de Acurácia logo após a época
+        model.eval() # Modo de inferência
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for data in testloader:
+                inputs, labels = data[0].to(device), data[1].to(device)
+                outputs = model(inputs)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+                
+        epoch_acc = 100 * correct / total
+        val_accuracies.append(epoch_acc)
+        
+        print(f"Epoch {epoch+1}/{epochs} - Loss: {epoch_loss:.4f} | Val Acc: {epoch_acc:.2f}%")
 
     end_time = time.time()
     train_time = end_time - start_time
     print(f"Treinamento concluído em {train_time:.2f} segundos.")
     
-    # Avaliação (Inferência)
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in testloader:
-            inputs, labels = data[0].to(device), data[1].to(device)
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-            
-    accuracy = 100 * correct / total
-    print(f"Acurácia de Validação: {accuracy:.2f}%")
-    
-    # Salvar resultados
+    final_accuracy = val_accuracies[-1]
     model_size = sum(p.numel() for p in model.parameters())
     
-    return train_losses, accuracy, train_time, model_size
+    return train_losses, val_accuracies, final_accuracy, train_time, model_size
 
 # --- EXECUÇÃO E COMPARAÇÃO ---
 if __name__ == '__main__':
@@ -183,22 +186,36 @@ if __name__ == '__main__':
     results = {}
     
     for name, model in models.items():
-        losses, acc, t_time, size = train_model(model, name, epochs=3)
-        results[name] = {'Losses': losses, 'Accuracy': acc, 'Time': t_time, 'Size': size}
+        losses, val_accs, acc, t_time, size = train_model(model, name, epochs=3)
+        results[name] = {'Losses': losses, 'ValAccs': val_accs, 'Accuracy': acc, 'Time': t_time, 'Size': size}
         
-    # Salvar Gráficos
+    os.makedirs('results', exist_ok=True)
+    
+    # 1. Gráfico de Loss
     plt.figure(figsize=(10,5))
     for name, res in results.items():
-        plt.plot(res['Losses'], label=name)
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss (Treino)')
+        plt.plot(range(1, 4), res['Losses'], marker='o', label=name)
+    plt.xlabel('Época (Epoch)')
+    plt.ylabel('Loss de Treinamento')
     plt.title('Comparativo de Loss por Arquitetura')
     plt.legend()
-    os.makedirs('results', exist_ok=True)
+    plt.xticks([1, 2, 3])
     plt.savefig('results/loss_comparativo.png')
-    print("\nGráfico salvo em results/loss_comparativo.png")
     
-    print("\n--- RESUMO COMPARATIVO ---")
+    # 2. Gráfico de Acurácia
+    plt.figure(figsize=(10,5))
+    for name, res in results.items():
+        plt.plot(range(1, 4), res['ValAccs'], marker='s', label=name)
+    plt.xlabel('Época (Epoch)')
+    plt.ylabel('Acurácia de Validação (%)')
+    plt.title('Comparativo de Acurácia por Arquitetura')
+    plt.legend()
+    plt.xticks([1, 2, 3])
+    plt.savefig('results/accuracy_comparativo.png')
+    
+    print("\nGráficos (Loss e Accuracy) salvos na pasta results/!")
+    
+    print("\n--- RESUMO COMPARATIVO FINAL ---")
     print(f"{'Modelo':<20} | {'Tempo(s)':<10} | {'Acurácia(%)':<12} | {'Parâmetros':<10} | {'Última Loss':<10}")
     print("-" * 75)
     for name, res in results.items():
